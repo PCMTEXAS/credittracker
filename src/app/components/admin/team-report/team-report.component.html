@@ -1,0 +1,208 @@
+<app-navbar />
+
+<div class="container-fluid py-4 px-4">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Team Compliance Report</h4>
+      <p class="text-muted small mb-0">Annual credit goal status for all learners</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <select class="form-select form-select-sm" style="width:auto"
+              [value]="selectedYear()"
+              (change)="selectedYear.set(+$any($event.target).value); loadReport()">
+        <option [value]="currentYear - 1">{{ currentYear - 1 }}</option>
+        <option [value]="currentYear">{{ currentYear }}</option>
+        <option [value]="currentYear + 1">{{ currentYear + 1 }}</option>
+      </select>
+      <button class="btn btn-sm btn-outline-success" (click)="exportCSV()">
+        <i class="bi bi-download me-1"></i>Export CSV
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div>
+    </div>
+  } @else {
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3">
+          <div class="fw-bold fs-3">{{ summary().total }}</div>
+          <div class="text-muted small">Total Learners</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3 border-primary">
+          <div class="fw-bold fs-3 text-primary">{{ summary().complete }}</div>
+          <div class="text-muted small">Complete</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3 border-success">
+          <div class="fw-bold fs-3 text-success">{{ summary().onTrack }}</div>
+          <div class="text-muted small">On Track</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3 border-warning">
+          <div class="fw-bold fs-3 text-warning">{{ summary().atRisk }}</div>
+          <div class="text-muted small">At Risk</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3 border-danger">
+          <div class="fw-bold fs-3 text-danger">{{ summary().behind }}</div>
+          <div class="text-muted small">Behind</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card text-center p-3">
+          <div class="fw-bold fs-3 text-secondary">{{ summary().noGoal }}</div>
+          <div class="text-muted small">No Goal Set</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card stat-card mb-3">
+      <div class="card-body py-2 px-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-md-4">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" placeholder="Search by name or title…"
+                     [value]="searchText()"
+                     (input)="searchText.set($any($event.target).value)">
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm"
+                    [value]="filterStatus()"
+                    (change)="filterStatus.set($any($event.target).value)">
+              <option value="all">All Statuses</option>
+              <option value="complete">Complete</option>
+              <option value="on-track">On Track</option>
+              <option value="at-risk">At Risk</option>
+              <option value="behind">Behind</option>
+              <option value="no-goal">No Goal</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm"
+                    [value]="filterDept()"
+                    (change)="filterDept.set($any($event.target).value)">
+              <option value="all">All Departments</option>
+              @for (dept of departments(); track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12 col-md-2 text-muted small text-end">
+            {{ filtered().length }} of {{ rows().length }} learners
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Learner</th>
+              <th>Department</th>
+              <th>Progress</th>
+              <th class="text-center">Earned / Goal</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filtered().length === 0) {
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">
+                  <i class="bi bi-people fs-1 d-block mb-2 opacity-25"></i>
+                  No learners match the current filters.
+                </td>
+              </tr>
+            }
+            @for (row of filtered(); track row.user.user_id) {
+              <tr>
+                <td>
+                  <div class="fw-medium">{{ row.user.name }}</div>
+                  <div class="text-muted" style="font-size:0.75rem;">{{ row.user.job_title || row.user.role }}</div>
+                </td>
+                <td class="text-muted small">{{ row.user.department || '—' }}</td>
+                <td style="min-width:160px;">
+                  @if (row.status === 'no-goal') {
+                    <span class="text-muted small fst-italic">No goal assigned</span>
+                  } @else {
+                    <div class="progress" role="progressbar"
+                         [attr.aria-valuenow]="row.percent" aria-valuemin="0" aria-valuemax="100"
+                         [attr.aria-label]="row.user.name + ' progress'">
+                      <div class="progress-bar {{ progressBarClass(row.status) }}"
+                           [style.width]="row.percent + '%'"></div>
+                    </div>
+                    <div class="text-muted mt-1" style="font-size:0.72rem;">{{ row.percent }}% complete</div>
+                  }
+                </td>
+                <td class="text-center fw-medium">
+                  @if (row.status !== 'no-goal') {
+                    {{ row.totalEarned }} / {{ row.totalGoal }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="text-center">
+                  <span class="badge {{ statusBadge(row.status) }}">{{ statusLabel(row.status) }}</span>
+                </td>
+              </tr>
+              <!-- Per-type breakdown (collapsed detail) -->
+              @if (row.status !== 'no-goal' && creditTypes().length > 0) {
+                @for (ct of creditTypes(); track ct.id) {
+                  @if (row.byType[ct.id]) {
+                    <tr class="table-light">
+                      <td class="ps-4 text-muted small" colspan="2">
+                        <i class="bi bi-arrow-return-right me-1"></i>{{ ct.name }}
+                      </td>
+                      <td>
+                        <div class="progress" style="height:6px;" role="progressbar"
+                             [attr.aria-valuenow]="row.byType[ct.id].percent"
+                             aria-valuemin="0" aria-valuemax="100">
+                          <div class="progress-bar bg-info"
+                               [style.width]="row.byType[ct.id].percent + '%'"></div>
+                        </div>
+                      </td>
+                      <td class="text-center text-muted small">
+                        {{ row.byType[ct.id].earned }} / {{ row.byType[ct.id].goal }}
+                      </td>
+                      <td class="text-center">
+                        <span class="text-muted small">{{ row.byType[ct.id].percent }}%</span>
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alert for at-risk/behind -->
+    @if (summary().atRisk + summary().behind > 0) {
+      <div class="alert alert-warning mt-3 d-flex gap-2">
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <div>
+          <strong>{{ summary().atRisk + summary().behind }} learner(s)</strong> are at risk or behind pace.
+          Consider reaching out or scheduling additional training sessions.
+        </div>
+      </div>
+    }
+
+  }
+</div>

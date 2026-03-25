@@ -1,0 +1,74 @@
+<div class="login-bg d-flex align-items-center justify-content-center">
+  <div class="container" style="max-width: 420px;">
+    <div class="text-center mb-4">
+      <i class="bi bi-award-fill text-warning" style="font-size: 3rem;"></i>
+      <h1 class="text-white fw-bold mt-2 mb-0">CE Credit Tracker</h1>
+      <p class="text-white-50 small">Continuing Education Goal Management</p>
+    </div>
+
+    <div class="card login-card p-4">
+      <h5 class="fw-semibold mb-4 text-center">Sign In</h5>
+
+      @if (errorMsg()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          {{ errorMsg() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="userId" class="form-label fw-medium">User ID</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input
+              id="userId"
+              type="text"
+              class="form-control"
+              formControlName="userId"
+              placeholder="Enter your user ID"
+              autocomplete="username"
+              [class.is-invalid]="form.controls.userId.invalid && form.controls.userId.touched">
+            <div class="invalid-feedback">User ID is required.</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="password" class="form-label fw-medium">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="form-control"
+              formControlName="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="showPassword.set(!showPassword())"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+              <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+            </button>
+            <div class="invalid-feedback">Password is required.</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Signing in...
+          } @else {
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          }
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-white-50 small mt-3">
+      DigitalChalk &mdash; CE Credit Tracker &copy; {{ 2026 }}
+    </p>
+  </div>
+</div>

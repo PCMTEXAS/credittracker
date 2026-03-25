@@ -1,0 +1,181 @@
+<app-navbar />
+
+<div class="container-fluid py-4 px-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="fw-bold mb-0"><i class="bi bi-plus-circle me-2 text-primary"></i>Log Credits</h4>
+      <p class="text-muted small mb-0">Record completed training or continuing education credits</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger d-flex gap-2 align-items-center">
+      <i class="bi bi-exclamation-circle-fill"></i>{{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success d-flex gap-2 align-items-center">
+      <i class="bi bi-check-circle-fill"></i>{{ successMsg() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div>
+    </div>
+  } @else {
+
+    <div class="row g-4">
+      <!-- Entry Form -->
+      <div class="col-12 col-lg-4">
+        <div class="card stat-card">
+          <div class="card-header bg-transparent py-3">
+            <h6 class="fw-semibold mb-0">New Credit Entry</h6>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="form" (ngSubmit)="submit()">
+
+              @if (isAdmin()) {
+                <div class="mb-3">
+                  <label for="ceUser" class="form-label fw-medium">Learner <span class="text-danger">*</span></label>
+                  <select id="ceUser" class="form-select" formControlName="user_id"
+                          [class.is-invalid]="form.controls.user_id.invalid && form.controls.user_id.touched">
+                    <option value="">— Select learner —</option>
+                    @for (u of users(); track u.user_id) {
+                      <option [value]="u.user_id">{{ u.name }}</option>
+                    }
+                  </select>
+                  <div class="invalid-feedback">Please select a learner.</div>
+                </div>
+              }
+
+              <div class="mb-3">
+                <label for="ceCreditType" class="form-label fw-medium">Credit Type <span class="text-danger">*</span></label>
+                <select id="ceCreditType" class="form-select" formControlName="credit_type_id"
+                        [class.is-invalid]="form.controls.credit_type_id.invalid && form.controls.credit_type_id.touched">
+                  <option value="">— Select credit type —</option>
+                  @for (ct of creditTypes(); track ct.id) {
+                    <option [value]="ct.id">{{ ct.name }}</option>
+                  }
+                </select>
+                <div class="invalid-feedback">Credit type is required.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="ceAmount" class="form-label fw-medium">Credits Earned <span class="text-danger">*</span></label>
+                <input id="ceAmount" type="number" class="form-control" formControlName="amount"
+                       min="0.5" step="0.5" placeholder="e.g. 2.5"
+                       [class.is-invalid]="form.controls.amount.invalid && form.controls.amount.touched">
+                <div class="invalid-feedback">Enter a valid positive credit amount.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="ceCourse" class="form-label fw-medium">Course / Activity Name <span class="text-danger">*</span></label>
+                <input id="ceCourse" type="text" class="form-control" formControlName="course_name"
+                       placeholder="e.g. Forklift Safety Certification"
+                       [class.is-invalid]="form.controls.course_name.invalid && form.controls.course_name.touched">
+                <div class="invalid-feedback">Course name is required.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="ceDate" class="form-label fw-medium">Date Completed <span class="text-danger">*</span></label>
+                <input id="ceDate" type="date" class="form-control" formControlName="earned_date"
+                       [class.is-invalid]="form.controls.earned_date.invalid && form.controls.earned_date.touched">
+                <div class="invalid-feedback">Date is required.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="ceSource" class="form-label fw-medium">Source</label>
+                <select id="ceSource" class="form-select" formControlName="source">
+                  <option value="manual">Manual Entry</option>
+                  <option value="course">Completed Course</option>
+                  <option value="external">External Training</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="ceNotes" class="form-label fw-medium">Notes</label>
+                <textarea id="ceNotes" class="form-control" formControlName="notes" rows="2"
+                          placeholder="Optional notes (provider, certificate #, etc.)"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                <i class="bi bi-plus-circle me-1"></i>Log Credits
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credit Log -->
+      <div class="col-12 col-lg-8">
+        <div class="card stat-card">
+          <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-semibold mb-0">Credit Log — {{ currentYear }}</h6>
+            <span class="badge bg-body-secondary text-body border">{{ entries().length }} entries</span>
+          </div>
+
+          @if (entries().length === 0) {
+            <div class="card-body text-center text-muted py-5">
+              <i class="bi bi-journal-x fs-1 d-block mb-2 opacity-25"></i>
+              <p class="mb-0">No credits logged for {{ currentYear }} yet.</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                  <tr>
+                    @if (isAdmin()) { <th>Learner</th> }
+                    <th>Course / Activity</th>
+                    <th>Credit Type</th>
+                    <th>Date</th>
+                    <th class="text-center">Credits</th>
+                    <th>Source</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of entries(); track entry.id) {
+                    <tr>
+                      @if (isAdmin()) {
+                        <td class="small fw-medium">{{ userName(entry.user_id) }}</td>
+                      }
+                      <td>
+                        <div class="fw-medium small">{{ entry.course_name }}</div>
+                        @if (entry.notes) {
+                          <div class="text-muted" style="font-size:0.72rem;">{{ entry.notes }}</div>
+                        }
+                      </td>
+                      <td class="text-muted small">{{ entry.credit_type_name }}</td>
+                      <td class="text-muted small text-nowrap">{{ formatDate(entry.earned_date) }}</td>
+                      <td class="text-center">
+                        <span class="badge bg-primary-subtle text-primary-emphasis fw-bold px-2">
+                          +{{ entry.amount }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge bg-body-secondary text-body border" style="font-size:0.7rem;">
+                          {{ sourceLabel(entry.source) }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-danger" (click)="remove(entry.id)"
+                                [attr.aria-label]="'Delete ' + entry.course_name">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+  }
+</div>

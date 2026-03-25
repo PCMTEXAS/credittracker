@@ -1,0 +1,328 @@
+<app-navbar />
+
+<div class="container-fluid py-4 px-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="fw-bold mb-0"><i class="bi bi-bullseye me-2 text-primary"></i>Goal Builder</h4>
+      <p class="text-muted small mb-0">Assign annual credit goals for {{ currentYear }}</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger d-flex gap-2 align-items-center">
+      <i class="bi bi-exclamation-circle-fill"></i>{{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success d-flex gap-2 align-items-center">
+      <i class="bi bi-check-circle-fill"></i>{{ successMsg() }}
+    </div>
+  }
+
+  <!-- No credit types warning -->
+  @if (!loading() && creditTypes().length === 0) {
+    <div class="alert alert-warning d-flex gap-2">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+      <div>No credit types defined yet.
+        <a href="/admin/credit-types" class="alert-link">Define credit types here</a> before setting goals.
+      </div>
+    </div>
+  }
+
+  <!-- Tab Nav -->
+  <ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'rules'" (click)="setTab('rules')" role="tab">
+        <i class="bi bi-funnel me-2"></i>Rule-Based
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'bulk'" (click)="setTab('bulk')" role="tab">
+        <i class="bi bi-people me-2"></i>Bulk Assignment
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'individual'" (click)="setTab('individual')" role="tab">
+        <i class="bi bi-person me-2"></i>Individual
+      </button>
+    </li>
+  </ul>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div>
+    </div>
+  } @else {
+
+    <!-- ── RULE-BASED TAB ───────────────────────────────────────────────── -->
+    @if (activeTab() === 'rules') {
+      <div class="row g-4">
+        <div class="col-12 col-lg-5">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3">
+              <h6 class="fw-semibold mb-0">Create Goal Rule</h6>
+              <p class="text-muted small mb-0 mt-1">
+                Goals are automatically assigned to users matching the selected field value.
+              </p>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="ruleForm" (ngSubmit)="saveRule()">
+                <div class="mb-3">
+                  <label for="rField" class="form-label fw-medium">Match on User Field</label>
+                  <select id="rField" class="form-select" formControlName="user_field">
+                    <option value="job_title">Job Title</option>
+                    <option value="department">Department</option>
+                    <option value="role">Role</option>
+                    <option value="tag">Tag</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="rValue" class="form-label fw-medium">Field Value</label>
+                  <input id="rValue" type="text" class="form-control" formControlName="field_value"
+                         placeholder="e.g. Forklift Driver, Safety, reporter"
+                         [class.is-invalid]="ruleForm.controls.field_value.invalid && ruleForm.controls.field_value.touched">
+                  <div class="invalid-feedback">Field value is required.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="rType" class="form-label fw-medium">Credit Type</label>
+                  <select id="rType" class="form-select" formControlName="credit_type_id"
+                          [class.is-invalid]="ruleForm.controls.credit_type_id.invalid && ruleForm.controls.credit_type_id.touched">
+                    <option value="">— Select credit type —</option>
+                    @for (ct of creditTypes(); track ct.id) {
+                      <option [value]="ct.id">{{ ct.name }}</option>
+                    }
+                  </select>
+                  <div class="invalid-feedback">Credit type is required.</div>
+                </div>
+                <div class="mb-4">
+                  <label for="rAmount" class="form-label fw-medium">Target Credits</label>
+                  <input id="rAmount" type="number" class="form-control" formControlName="target_amount"
+                         min="0.5" step="0.5" placeholder="e.g. 8"
+                         [class.is-invalid]="ruleForm.controls.target_amount.invalid && ruleForm.controls.target_amount.touched">
+                  <div class="invalid-feedback">Enter a positive credit amount.</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" [disabled]="saving()">
+                  @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Add Rule
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+              <h6 class="fw-semibold mb-0">Active Rules for {{ currentYear }}</h6>
+              <button class="btn btn-sm btn-outline-primary" (click)="applyRules()" [disabled]="applyingRules() || rules().length === 0">
+                @if (applyingRules()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                <i class="bi bi-lightning me-1"></i>Apply All Rules
+              </button>
+            </div>
+            @if (rules().length === 0) {
+              <div class="card-body text-center text-muted py-5">
+                <i class="bi bi-funnel fs-1 d-block mb-2 opacity-25"></i>
+                <p class="mb-0">No rules defined yet. Create one to get started.</p>
+              </div>
+            } @else {
+              <div class="card-body p-3">
+                @for (rule of rules(); track rule.id) {
+                  <div class="goal-rule-row d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="fw-medium small">
+                        <span class="text-muted">{{ fieldLabel(rule.user_field) }} =</span>
+                        <span class="ms-1">{{ rule.field_value }}</span>
+                      </div>
+                      <div class="text-muted" style="font-size:0.78rem;">
+                        {{ rule.credit_type_name }} &rarr; {{ rule.target_amount }} credits
+                      </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteRule(rule.id)"
+                            [attr.aria-label]="'Delete rule for ' + rule.field_value">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                }
+                <p class="text-muted small mt-3 mb-0">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Click "Apply All Rules" to push these rules to matching users.
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── BULK TAB ────────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'bulk') {
+      <div class="row g-4">
+        <div class="col-12 col-lg-4">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3">
+              <h6 class="fw-semibold mb-0">Bulk Goal Assignment</h6>
+              <p class="text-muted small mb-0 mt-1">Set the same goal for a group of users at once.</p>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="bulkForm" (ngSubmit)="saveBulk()">
+                <div class="mb-3">
+                  <label for="bType" class="form-label fw-medium">Credit Type</label>
+                  <select id="bType" class="form-select" formControlName="credit_type_id"
+                          [class.is-invalid]="bulkForm.controls.credit_type_id.invalid && bulkForm.controls.credit_type_id.touched">
+                    <option value="">— Select credit type —</option>
+                    @for (ct of creditTypes(); track ct.id) {
+                      <option [value]="ct.id">{{ ct.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="bAmount" class="form-label fw-medium">Target Credits</label>
+                  <input id="bAmount" type="number" class="form-control" formControlName="target_amount"
+                         min="0.5" step="0.5" placeholder="e.g. 12"
+                         [class.is-invalid]="bulkForm.controls.target_amount.invalid && bulkForm.controls.target_amount.touched">
+                </div>
+                <button type="submit" class="btn btn-primary w-100" [disabled]="saving()">
+                  @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Assign to Selected Users ({{ bulkForm.controls.user_ids.value.length }})
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+              <h6 class="fw-semibold mb-0">Select Users</h6>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" (click)="selectAllUsers()">Select All</button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="clearAllUsers()">Clear</button>
+              </div>
+            </div>
+            <div class="card-body p-0" style="max-height:400px;overflow-y:auto;">
+              @if (users().length === 0) {
+                <div class="text-center py-4 text-muted small">No active users found.</div>
+              } @else {
+                <ul class="list-group list-group-flush">
+                  @for (user of users(); track user.user_id) {
+                    <li class="list-group-item px-3 py-2" style="cursor:pointer"
+                        (click)="toggleBulkUser(user.user_id)">
+                      <div class="d-flex align-items-center gap-3">
+                        <input type="checkbox" class="form-check-input mt-0"
+                               [checked]="isBulkSelected(user.user_id)"
+                               (click)="$event.stopPropagation()"
+                               (change)="toggleBulkUser(user.user_id)"
+                               [id]="'u-' + user.user_id"
+                               [attr.aria-label]="'Select ' + user.name">
+                        <label class="form-check-label w-100 mb-0" style="cursor:pointer" [for]="'u-' + user.user_id">
+                          <div class="fw-medium small">{{ user.name }}</div>
+                          <div class="text-muted" style="font-size:0.75rem;">
+                            {{ user.job_title || user.role }} {{ user.department ? '· ' + user.department : '' }}
+                          </div>
+                        </label>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── INDIVIDUAL TAB ─────────────────────────────────────────────────── -->
+    @if (activeTab() === 'individual') {
+      <div class="row g-4">
+        <div class="col-12 col-lg-5">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3">
+              <h6 class="fw-semibold mb-0">Individual Goal Assignment</h6>
+              <p class="text-muted small mb-0 mt-1">Set a custom goal for a specific learner.</p>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="indivForm" (ngSubmit)="saveIndividual()">
+                <div class="mb-3">
+                  <label for="iUser" class="form-label fw-medium">Learner</label>
+                  <select id="iUser" class="form-select" formControlName="user_id"
+                          [class.is-invalid]="indivForm.controls.user_id.invalid && indivForm.controls.user_id.touched">
+                    <option value="">— Select learner —</option>
+                    @for (u of users(); track u.user_id) {
+                      <option [value]="u.user_id">{{ u.name }} ({{ u.job_title || u.role }})</option>
+                    }
+                  </select>
+                  <div class="invalid-feedback">Please select a learner.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="iType" class="form-label fw-medium">Credit Type</label>
+                  <select id="iType" class="form-select" formControlName="credit_type_id"
+                          [class.is-invalid]="indivForm.controls.credit_type_id.invalid && indivForm.controls.credit_type_id.touched">
+                    <option value="">— Select credit type —</option>
+                    @for (ct of creditTypes(); track ct.id) {
+                      <option [value]="ct.id">{{ ct.name }}</option>
+                    }
+                  </select>
+                  <div class="invalid-feedback">Please select a credit type.</div>
+                </div>
+                <div class="mb-4">
+                  <label for="iAmount" class="form-label fw-medium">Target Credits</label>
+                  <input id="iAmount" type="number" class="form-control" formControlName="target_amount"
+                         min="0.5" step="0.5" placeholder="e.g. 6"
+                         [class.is-invalid]="indivForm.controls.target_amount.invalid && indivForm.controls.target_amount.touched">
+                  <div class="invalid-feedback">Enter a valid credit amount.</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" [disabled]="saving()">
+                  @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Save Goal
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <div class="card stat-card">
+            <div class="card-header bg-transparent py-3">
+              <h6 class="fw-semibold mb-0">Assigned Goals for {{ currentYear }}</h6>
+            </div>
+            @if (userGoals().length === 0) {
+              <div class="card-body text-center text-muted py-5">
+                <i class="bi bi-person-check fs-1 d-block mb-2 opacity-25"></i>
+                <p class="mb-0">No individual goals assigned yet.</p>
+              </div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Learner</th>
+                      <th>Credit Type</th>
+                      <th class="text-end">Target</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (goal of userGoals(); track goal.id) {
+                      <tr>
+                        <td class="fw-medium small">{{ userName(goal.user_id) }}</td>
+                        <td class="text-muted small">{{ goal.credit_type_name }}</td>
+                        <td class="text-end fw-bold">{{ goal.target_amount }}</td>
+                        <td class="text-end">
+                          <button class="btn btn-sm btn-outline-danger" (click)="deleteGoal(goal.id)"
+                                  [attr.aria-label]="'Delete goal for ' + userName(goal.user_id)">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+  }
+</div>
