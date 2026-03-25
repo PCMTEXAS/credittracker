@@ -1,0 +1,63 @@
+# ===== Environment & Secrets =====
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.*.local
+
+# Private keys & certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# ===== Compiled output =====
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# ===== Node =====
+/node_modules
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+.pnpm-debug.log
+
+# ===== IDEs and editors =====
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# ===== Visual Studio Code =====
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# ===== macOS =====
+.DS_Store
+Thumbs.db
+
+# ===== Angular =====
+.angular/cache
+.sass-cache/
+
+# ===== Testing =====
+/coverage
+
+# ===== Misc =====
+*.log
+*.swp
+*.swo
+*~

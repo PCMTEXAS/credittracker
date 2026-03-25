@@ -1,0 +1,27 @@
+{
+  "name": "credittracker",
+  "version": "0.0.1",
+  "description": "Credit tracking application — Angular + Supabase",
+  "engines": {
+    "node": ">=20.x"
+  },
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "eslint \"src/**/*.{ts,html}\" --max-warnings 0",
+    "lint:fix": "eslint \"src/**/*.{ts,html}\" --fix",
+    "set-env": "ts-node scripts/set-env.ts"
+  },
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "angular-eslint": "^19.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
+  }
+}
