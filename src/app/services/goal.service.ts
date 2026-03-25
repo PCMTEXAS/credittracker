@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { UserGoal, GoalRule, GoalWithProgress } from '../models/goal.model';
+import { UserGoal, GoalRule } from '../models/goal.model';
 
 @Injectable({ providedIn: 'root' })
 export class GoalService {
@@ -128,7 +128,7 @@ export class GoalService {
 
   // ─── Progress Calculation ─────────────────────────────────────────────────
 
-  computeStatus(earned: number, target: number, yearFraction: number): GoalWithProgress['status'] {
+  computeStatus(earned: number, target: number, yearFraction: number): 'complete' | 'on-track' | 'at-risk' | 'behind' {
     if (earned >= target) return 'complete';
     const pace = target * yearFraction;
     const ratio = earned / (pace || 1);

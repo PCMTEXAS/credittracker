@@ -56,8 +56,8 @@
       <div class="d-flex align-items-center gap-3">
         <span class="text-white-50 small">
           <i class="bi bi-person-circle me-1"></i>
-          {{ auth.currentUser()?.name }}
-          <span class="badge bg-warning text-dark ms-1 text-capitalize">{{ auth.currentUser()?.role }}</span>
+          {{ auth.user()?.name }}
+          <span class="badge bg-warning text-dark ms-1 text-capitalize">{{ auth.user()?.role }}</span>
         </span>
         <button class="btn btn-outline-light btn-sm" (click)="logout()">
           <i class="bi bi-box-arrow-right me-1"></i>Logout

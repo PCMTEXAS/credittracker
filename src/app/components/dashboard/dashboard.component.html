@@ -1,229 +1,89 @@
-<app-navbar />
-
-<div class="container-fluid py-4 px-4">
-
-  <!-- Page Header -->
-  <div class="d-flex align-items-center justify-content-between mb-4">
+<div class="container-fluid px-0">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h4 class="fw-bold mb-0">My Credit Dashboard</h4>
-      <p class="text-muted small mb-0">{{ currentYear }} Annual Goal Progress</p>
+      <h2 class="fw-bold mb-0">My CE Dashboard</h2>
+      <p class="text-muted mb-0">{{ year }} Progress</p>
     </div>
-    <div class="d-flex gap-2 align-items-center">
-      <span class="badge bg-body-secondary text-body border">
-        <i class="bi bi-calendar3 me-1"></i>{{ currentYear }}
-      </span>
-      @if (isAdmin()) {
-        <a routerLink="/admin/credit-entry" class="btn btn-primary btn-sm">
-          <i class="bi bi-plus-circle me-1"></i>Log Credits
-        </a>
-      }
-    </div>
+    <span class="badge bg-primary fs-6">{{ auth.user()?.name ?? auth.user()?.user_id }}</span>
   </div>
 
   @if (loading()) {
-    <div class="d-flex justify-content-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2 text-muted">Loading your progress...</p>
     </div>
   } @else {
-
-    <!-- Summary Stats Row -->
+    <!-- Summary cards -->
     <div class="row g-3 mb-4">
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card h-100">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center"
-                   style="width:44px;height:44px;background:rgba(14,42,94,0.1);">
-                <i class="bi bi-award fs-5" style="color:#0E2A5E;"></i>
-              </div>
-              <div>
-                <div class="fw-bold fs-4">{{ totalEarned() }}</div>
-                <div class="text-muted small">Credits Earned</div>
-              </div>
-            </div>
+      <div class="col-12 col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="fs-1 fw-bold text-primary">{{ totalEarned() }}</div>
+            <div class="text-muted">Total Credits Earned</div>
           </div>
         </div>
       </div>
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card h-100">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center"
-                   style="width:44px;height:44px;background:rgba(245,130,31,0.1);">
-                <i class="bi bi-bullseye fs-5" style="color:#F5821F;"></i>
-              </div>
-              <div>
-                <div class="fw-bold fs-4">{{ totalGoal() }}</div>
-                <div class="text-muted small">Annual Goal</div>
-              </div>
-            </div>
+      <div class="col-12 col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="fs-1 fw-bold text-secondary">{{ totalTarget() }}</div>
+            <div class="text-muted">Total Credits Required</div>
           </div>
         </div>
       </div>
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card h-100">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center"
-                   style="width:44px;height:44px;background:rgba(25,135,84,0.1);">
-                <i class="bi bi-check-circle fs-5 text-success"></i>
-              </div>
-              <div>
-                <div class="fw-bold fs-4">{{ overallPercent() }}%</div>
-                <div class="text-muted small">Overall Progress</div>
-              </div>
+      <div class="col-12 col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="fs-1 fw-bold" [class.text-success]="totalTarget() > 0 && totalEarned() >= totalTarget()" [class.text-warning]="totalTarget() > 0 && totalEarned() < totalTarget()">
+              {{ totalTarget() > 0 ? ((totalEarned() / totalTarget()) * 100 | number:'1.0-0') : 0 }}%
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card h-100">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center"
-                   style="width:44px;height:44px;background:rgba(220,53,69,0.1);">
-                <i class="bi bi-exclamation-triangle fs-5 text-danger"></i>
-              </div>
-              <div>
-                <div class="fw-bold fs-4">{{ atRiskCount() }}</div>
-                <div class="text-muted small">At Risk / Behind</div>
-              </div>
-            </div>
+            <div class="text-muted">Overall Completion</div>
           </div>
         </div>
       </div>
     </div>
 
-    @if (totalGoal() > 0) {
-      <!-- Overall Progress Bar -->
-      <div class="card stat-card mb-4">
-        <div class="card-body p-4">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-semibold mb-0">Overall Compliance Progress</h6>
-            <span class="badge credit-badge {{ statusBadgeClass(overallStatus()) }}">
-              {{ statusLabel(overallStatus()) }}
-            </span>
-          </div>
-          <div class="progress mb-2" style="height: 18px;" role="progressbar"
-               [attr.aria-valuenow]="overallPercent()" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-bar fw-semibold {{ progressBarClass(overallStatus()) }}"
-                 [style.width]="overallPercent() + '%'">
-              {{ overallPercent() }}%
+    <!-- Goal progress -->
+    @if (progress().length === 0) {
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <div class="fs-1 mb-3">🎯</div>
+          <h5>No goals set yet</h5>
+          <p class="text-muted">Goals will appear here once an admin configures them for your profile.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="row g-3">
+        @for (p of progress(); track p.credit_type_id) {
+          <div class="col-12 col-lg-6">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h6 class="fw-bold mb-0">{{ p.credit_type_name }}</h6>
+                    <small class="text-muted">{{ p.earned }} / {{ p.target }} credits</small>
+                  </div>
+                  @if (p.percent >= 100) {
+                    <span class="badge bg-success">✓ Complete</span>
+                  } @else {
+                    <span class="badge bg-secondary">{{ p.remaining }} remaining</span>
+                  }
+                </div>
+                <div class="progress">
+                  <div class="progress-bar {{ getProgressColor(p.percent) }}"
+                       role="progressbar"
+                       [style.width.%]="p.percent"
+                       [attr.aria-valuenow]="p.percent"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                    {{ p.percent }}%
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="text-muted small">{{ totalEarned() }} of {{ totalGoal() }} total credits earned</div>
-        </div>
+        }
       </div>
     }
-
-    <div class="row g-4">
-      <!-- Credit Type Goals -->
-      <div class="col-12 col-xl-8">
-        <div class="card stat-card">
-          <div class="card-header bg-transparent border-bottom py-3">
-            <h6 class="fw-semibold mb-0"><i class="bi bi-tags me-2 text-primary"></i>Credit Goals by Type</h6>
-          </div>
-          <div class="card-body p-0">
-            @if (goalsWithProgress().length === 0) {
-              <div class="text-center py-5 text-muted">
-                <i class="bi bi-bullseye fs-1 d-block mb-2 opacity-25"></i>
-                <p class="mb-0">No goals assigned for {{ currentYear }}.</p>
-                @if (isAdmin()) {
-                  <a routerLink="/admin/goal-builder" class="btn btn-sm btn-outline-primary mt-2">
-                    Set Goals
-                  </a>
-                }
-              </div>
-            } @else {
-              <div class="p-3">
-                @for (goal of goalsWithProgress(); track goal.id) {
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                      <div class="fw-medium">{{ goal.credit_type_name }}</div>
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small">{{ goal.earned }} / {{ goal.target_amount }}</span>
-                        <span class="badge credit-badge {{ statusBadgeClass(goal.status) }}">
-                          {{ statusLabel(goal.status) }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="progress" role="progressbar"
-                         [attr.aria-label]="goal.credit_type_name + ' progress'"
-                         [attr.aria-valuenow]="goal.percent" aria-valuemin="0" aria-valuemax="100">
-                      <div class="progress-bar {{ progressBarClass(goal.status) }}"
-                           [style.width]="goal.percent + '%'"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                      <span class="text-muted" style="font-size:0.75rem;">{{ goal.percent }}% complete</span>
-                      <span class="text-muted" style="font-size:0.75rem;">
-                        {{ goal.target_amount - goal.earned > 0 ? (goal.target_amount - goal.earned) + ' remaining' : 'Goal met!' }}
-                      </span>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="col-12 col-xl-4">
-        <div class="card stat-card">
-          <div class="card-header bg-transparent border-bottom py-3">
-            <h6 class="fw-semibold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Activity</h6>
-          </div>
-          <div class="card-body p-0">
-            @if (recentEntries().length === 0) {
-              <div class="text-center py-5 text-muted">
-                <i class="bi bi-journal-x fs-1 d-block mb-2 opacity-25"></i>
-                <p class="mb-0 small">No credits logged yet.</p>
-              </div>
-            } @else {
-              <ul class="list-group list-group-flush">
-                @for (entry of recentEntries(); track entry.id) {
-                  <li class="list-group-item px-3 py-2">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div>
-                        <div class="fw-medium small">{{ entry.course_name }}</div>
-                        <div class="text-muted" style="font-size:0.75rem;">
-                          {{ entry.credit_type_name }} &bull; {{ formatDate(entry.earned_date) }}
-                        </div>
-                      </div>
-                      <span class="badge bg-primary-subtle text-primary-emphasis fw-bold">
-                        +{{ entry.amount }}
-                      </span>
-                    </div>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
-        </div>
-
-        <!-- Compliance Alerts -->
-        @if (atRiskCount() > 0) {
-          <div class="alert alert-warning mt-3 mb-0 d-flex gap-2">
-            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
-            <div>
-              <strong>Attention needed:</strong> {{ atRiskCount() }} credit
-              {{ atRiskCount() === 1 ? 'type is' : 'types are' }} at risk or behind pace.
-              Contact your administrator if you need help getting on track.
-            </div>
-          </div>
-        }
-        @if (overallPercent() >= 100) {
-          <div class="alert alert-success mt-3 mb-0 d-flex gap-2">
-            <i class="bi bi-trophy-fill flex-shrink-0 mt-1"></i>
-            <div>
-              <strong>Congratulations!</strong> You have met all your credit goals for {{ currentYear }}.
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-
   }
 </div>

@@ -3,42 +3,20 @@ import { authGuard, adminGuard, managerGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   {
-    path: 'login',
-    loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'dashboard',
+    path: '',
+    loadComponent: () => import('./components/layout/layout.component').then(m => m.LayoutComponent),
     canActivate: [authGuard],
-    loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
-  },
-  {
-    path: 'admin',
-    canActivate: [adminGuard],
     children: [
-      { path: '', redirectTo: 'credit-types', pathMatch: 'full' },
-      {
-        path: 'credit-types',
-        loadComponent: () => import('./components/admin/credit-types/credit-types.component').then(m => m.CreditTypesComponent),
-      },
-      {
-        path: 'goal-builder',
-        loadComponent: () => import('./components/admin/goal-builder/goal-builder.component').then(m => m.GoalBuilderComponent),
-      },
-      {
-        path: 'users',
-        loadComponent: () => import('./components/admin/users/users.component').then(m => m.UsersComponent),
-      },
-      {
-        path: 'credit-entry',
-        loadComponent: () => import('./components/admin/credit-entry/credit-entry.component').then(m => m.CreditEntryComponent),
-      },
-    ],
+      { path: 'dashboard', loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'log-credits', loadComponent: () => import('./components/log-credits/log-credits.component').then(m => m.LogCreditsComponent) },
+      { path: 'history', loadComponent: () => import('./components/history/history.component').then(m => m.HistoryComponent) },
+      { path: 'admin/credit-types', canActivate: [adminGuard], loadComponent: () => import('./components/admin/credit-types/credit-types.component').then(m => m.CreditTypesComponent) },
+      { path: 'admin/goal-builder', canActivate: [adminGuard], loadComponent: () => import('./components/admin/goal-builder/goal-builder.component').then(m => m.GoalBuilderComponent) },
+      { path: 'admin/users', canActivate: [adminGuard], loadComponent: () => import('./components/admin/users/users.component').then(m => m.UsersComponent) },
+      { path: 'admin/team-report', canActivate: [managerGuard], loadComponent: () => import('./components/admin/team-report/team-report.component').then(m => m.TeamReportComponent) },
+    ]
   },
-  {
-    path: 'team-report',
-    canActivate: [managerGuard],
-    loadComponent: () => import('./components/admin/team-report/team-report.component').then(m => m.TeamReportComponent),
-  },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'dashboard' }
 ];

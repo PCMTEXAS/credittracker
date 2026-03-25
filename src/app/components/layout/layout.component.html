@@ -1,0 +1,65 @@
+<div class="d-flex">
+  <!-- Sidebar -->
+  <nav class="sidebar d-flex flex-column p-3" style="width:240px; min-height:100vh">
+    <div class="text-white text-center mb-4">
+      <div class="fs-3">🎓</div>
+      <div class="fw-bold">CE Tracker</div>
+      <div class="small text-white-50">{{ auth.user()?.name ?? auth.user()?.user_id }}</div>
+    </div>
+    <ul class="nav flex-column gap-1 flex-grow-1">
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2" routerLink="/dashboard" routerLinkActive="active">
+          📊 Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2" routerLink="/log-credits" routerLinkActive="active">
+          ➕ Log Credits
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2" routerLink="/history" routerLinkActive="active">
+          📋 My History
+        </a>
+      </li>
+      @if (auth.isManager()) {
+        <li class="nav-item mt-3">
+          <div class="text-white-50 small px-3 text-uppercase fw-semibold mb-1">Team</div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2" routerLink="/admin/team-report" routerLinkActive="active">
+            👥 Team Report
+          </a>
+        </li>
+      }
+      @if (auth.isAdmin()) {
+        <li class="nav-item mt-3">
+          <div class="text-white-50 small px-3 text-uppercase fw-semibold mb-1">Admin</div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2" routerLink="/admin/credit-types" routerLinkActive="active">
+            🏷️ Credit Types
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2" routerLink="/admin/goal-builder" routerLinkActive="active">
+            🎯 Goal Builder
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2" routerLink="/admin/users" routerLinkActive="active">
+            👤 Users
+          </a>
+        </li>
+      }
+    </ul>
+    <button class="btn btn-outline-light btn-sm mt-auto" (click)="logout()">
+      🚪 Sign Out
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow-1 p-4">
+    <router-outlet />
+  </main>
+</div>

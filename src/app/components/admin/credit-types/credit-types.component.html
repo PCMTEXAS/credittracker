@@ -1,129 +1,73 @@
-<app-navbar />
-
-<div class="container-fluid py-4 px-4">
-  <div class="d-flex align-items-center justify-content-between mb-4">
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h4 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-primary"></i>Credit Types</h4>
-      <p class="text-muted small mb-0">Define the types of credits your organization tracks</p>
+      <h2 class="fw-bold mb-0">Credit Types</h2>
+      <p class="text-muted mb-0">Manage CE credit categories</p>
     </div>
+    <button class="btn btn-primary" (click)="startNew()">➕ Add Credit Type</button>
   </div>
 
-  @if (errorMsg()) {
-    <div class="alert alert-danger d-flex gap-2 align-items-center">
-      <i class="bi bi-exclamation-circle-fill"></i>{{ errorMsg() }}
-    </div>
-  }
-  @if (successMsg()) {
-    <div class="alert alert-success d-flex gap-2 align-items-center">
-      <i class="bi bi-check-circle-fill"></i>{{ successMsg() }}
-    </div>
-  }
-
-  <div class="row g-4">
-    <!-- Form -->
-    <div class="col-12 col-lg-4">
-      <div class="card stat-card">
-        <div class="card-header bg-transparent py-3">
-          <h6 class="fw-semibold mb-0">
-            {{ editingId() ? 'Edit Credit Type' : 'Add Credit Type' }}
-          </h6>
-        </div>
-        <div class="card-body">
-          <form [formGroup]="form" (ngSubmit)="save()">
-            <div class="mb-3">
-              <label for="ctName" class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+  @if (editing()) {
+    <div class="card mb-4 border-primary">
+      <div class="card-header bg-primary text-white fw-semibold">
+        {{ editing()?.id ? 'Edit' : 'New' }} Credit Type
+      </div>
+      <div class="card-body">
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="row g-3">
+            <div class="col-12 col-md-5">
+              <label for="ctName" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
               <input id="ctName" type="text" class="form-control" formControlName="name"
-                     placeholder="e.g. CEUs, Safety Credits, Ethics Hours"
-                     [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched">
-              <div class="invalid-feedback">Name is required (max 80 chars).</div>
+                [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched">
+              <div class="invalid-feedback">Name is required</div>
             </div>
-            <div class="mb-4">
-              <label for="ctDesc" class="form-label fw-medium">Description</label>
-              <textarea id="ctDesc" class="form-control" formControlName="description" rows="2"
-                        placeholder="Optional description"></textarea>
+            <div class="col-12 col-md-5">
+              <label for="ctDesc" class="form-label fw-semibold">Description</label>
+              <input id="ctDesc" type="text" class="form-control" formControlName="description">
             </div>
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary flex-fill" [disabled]="saving()">
-                @if (saving()) {
-                  <span class="spinner-border spinner-border-sm me-1"></span>
-                }
-                {{ editingId() ? 'Update' : 'Add Credit Type' }}
-              </button>
-              @if (editingId()) {
-                <button type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
-              }
+            <div class="col-12 col-md-2">
+              <label for="ctColor" class="form-label fw-semibold">Color</label>
+              <input id="ctColor" type="color" class="form-control form-control-color w-100" formControlName="color">
             </div>
-          </form>
-        </div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary" [disabled]="saving()">
+              @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+              Save
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
       </div>
+    </div>
+  }
 
-      <div class="card stat-card mt-3">
-        <div class="card-body p-3">
-          <h6 class="fw-semibold mb-2 small text-muted text-uppercase">Common Examples</h6>
-          <div class="d-flex flex-wrap gap-1">
-            @for (ex of ['CEUs', 'Safety Credits', 'Ethics Hours', 'Clinical Hours', 'MCEs', 'NJ CEUs', 'External Credits', 'Mandatory Training']; track ex) {
-              <span class="credit-type-chip" style="cursor:pointer" (click)="form.controls.name.setValue(ex)">{{ ex }}</span>
+  @if (loading()) {
+    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+  } @else {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Color</th><th>Name</th><th>Description</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (ct of creditTypes(); track ct.id) {
+              <tr>
+                <td><div class="rounded" [style.background]="ct.color" style="width:28px;height:28px"></div></td>
+                <td class="fw-semibold">{{ ct.name }}</td>
+                <td class="text-muted">{{ ct.description }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="startEdit(ct)">✏️ Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="delete(ct.id)">🗑 Delete</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="text-center text-muted py-4">No credit types yet</td></tr>
             }
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
-
-    <!-- List -->
-    <div class="col-12 col-lg-8">
-      <div class="card stat-card">
-        <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-          <h6 class="fw-semibold mb-0">Defined Credit Types</h6>
-          <span class="badge bg-body-secondary text-body border">{{ creditTypes().length }} types</span>
-        </div>
-        @if (loading()) {
-          <div class="card-body text-center py-5">
-            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div>
-          </div>
-        } @else if (creditTypes().length === 0) {
-          <div class="card-body text-center py-5 text-muted">
-            <i class="bi bi-tags fs-1 d-block mb-2 opacity-25"></i>
-            <p class="mb-0">No credit types defined yet. Add your first one.</p>
-          </div>
-        } @else {
-          <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Credit Type</th>
-                  <th>Description</th>
-                  <th class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (ct of creditTypes(); track ct.id; let i = $index) {
-                  <tr>
-                    <td>
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="rounded-circle d-inline-block"
-                              [style.background]="colorFor(i)"
-                              style="width:10px;height:10px;flex-shrink:0;"></span>
-                        <span class="fw-medium">{{ ct.name }}</span>
-                      </div>
-                    </td>
-                    <td class="text-muted small">{{ ct.description || '—' }}</td>
-                    <td class="text-end">
-                      <button class="btn btn-sm btn-outline-secondary me-1" (click)="startEdit(ct)"
-                              aria-label="Edit {{ ct.name }}">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger" (click)="remove(ct.id)"
-                              aria-label="Delete {{ ct.name }}">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
+  }
 </div>

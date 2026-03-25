@@ -11,15 +11,11 @@ export const authGuard: CanActivateFn = () => {
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) return router.createUrlTree(['/login']);
-  if (!auth.isAdmin()) return router.createUrlTree(['/dashboard']);
-  return true;
+  return auth.isAdmin() ? true : router.createUrlTree(['/dashboard']);
 };
 
 export const managerGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) return router.createUrlTree(['/login']);
-  if (!auth.isManager()) return router.createUrlTree(['/dashboard']);
-  return true;
+  return auth.isManager() ? true : router.createUrlTree(['/dashboard']);
 };
