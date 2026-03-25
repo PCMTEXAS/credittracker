@@ -53,7 +53,11 @@ export class CreditTypesComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     const v = this.form.getRawValue();
-    const payload: Partial<CreditType> = { ...v };
+    const payload: Partial<CreditType> = {
+      name: v.name,
+      description: v.description ?? undefined,
+      color: v.color ?? undefined
+    };
     if (this.editing()?.id) payload['id'] = this.editing()!.id;
     await this.service.upsert(payload);
     this.saving.set(false);
